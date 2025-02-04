@@ -1,0 +1,10 @@
+*.mp4
+*.pt
+*.csv
+*.pth
+/__pycache__
+*.pyc
+/configs/*
+/checkpoints/*
+test.py
+/dev/*

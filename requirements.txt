@@ -1,0 +1,20 @@
+numpy
+matplotlib
+imageio
+opencv-python
+IPython
+tensorflow
+tensorflow_hub
+tensorflow_docs
+git+https://github.com/tensorflow/docs
+torch
+torchvision
+ultralytics
+mediapipe
+mmengine
+mmcv==2.0.0rc4 -f https://download.openmmlab.com/mmcv/dist/cpu/torch1.13/index.html
+mmdet==3.1.0
+mmpose==1.1.0
+#git+https://github.com/JihuaPeng/KTPFormer.git
+#einops
+#timm
