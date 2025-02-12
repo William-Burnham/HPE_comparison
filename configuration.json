@@ -1,5 +1,5 @@
 {
-    "input_folder": "data\\clip_1",
+    "input_folder": "data\\clip_2",
     "confidence": 0.1,
 
     "do_save_keypoints": true,
@@ -9,9 +9,9 @@
     "do_plot_confidence": true,
     "overlay_output_folder": "output\\overlay\\conf",
 
-    "hrnet": true,
+    "hrnet": false,
     "mediapipe_pose": false,
-    "movenet_lightning": false,
-    "movenet_thunder": false,
+    "movenet_lightning": true,
+    "movenet_thunder": true,
     "yolopose": false
 }

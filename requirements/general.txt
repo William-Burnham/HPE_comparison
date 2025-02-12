@@ -1,0 +1,9 @@
+numpy
+matplotlib
+imageio
+opencv-python
+IPython
+ninja
+cython
+setuptools
+wheel

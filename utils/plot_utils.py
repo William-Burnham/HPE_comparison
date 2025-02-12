@@ -56,7 +56,13 @@ def overlay_keypoints_on_video(video_path, output_dir, model_type, keypoints, co
                 x = int(frame_keypoints[i+1] * width)
                 y = int(frame_keypoints[i] * height)
                 if plot_confidence:
-                    plt.plot(x, y, '.', markersize=frame_keypoints[i+2]*7*figscale, color=(1-frame_keypoints[i+2],frame_keypoints[i+2],0))
+                    # Colour based on confidence
+                    colour_conf = frame_keypoints[i+2]
+                    # Bounding outliers between 0 and 1
+                    if colour_conf > 1: colour_conf = 1
+                    elif colour_conf < 0: colour_conf = 0
+                    
+                    plt.plot(x, y, '.', markersize=frame_keypoints[i+2]*7*figscale, color=(1-colour_conf,colour_conf,0))
                 else:
                     plt.plot(x, y, '.', markersize=6*figscale, color=(0, 1, 0))
 
@@ -68,7 +74,12 @@ def overlay_keypoints_on_video(video_path, output_dir, model_type, keypoints, co
                 x2 = int(frame_keypoints[(connection[1]*3)+1] * width)
                 y2 = int(frame_keypoints[(connection[1]*3)] * height)
                 if plot_confidence:
+                    # Colour based on confidence
                     connection_confidence = 0.5 * (frame_keypoints[(connection[0]*3)+2] + frame_keypoints[(connection[1]*3)+2]) # Mean joint confidence of the two connection joints
+                    # Bounding outliers between 0 and 1
+                    if connection_confidence > 1: connection_confidence = 1
+                    elif connection_confidence < 0: connection_confidence = 0
+
                     plt.plot([x1, x2], [y1, y2], '-', linewidth=0.5*figscale, color=(1-connection_confidence, connection_confidence,0))
                 else:
                     plt.plot([x1, x2], [y1, y2], '-', linewidth=0.5*figscale, color=(0, 0.8, 0))

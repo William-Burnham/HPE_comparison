@@ -47,6 +47,9 @@ Create development environment:
 Install requirements with pip:
 
     pip install -r requirements.txt
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+
 
 
 

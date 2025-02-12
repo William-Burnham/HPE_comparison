@@ -90,7 +90,7 @@ class MediaPipe_Model(HPE_Model):
                 start = time.time()
                 result = model.detect_for_video(mp_img, timestamp_ms)
                 end = time.time()
-                print(f"{self.model_type} prediction for frame {frame_i} ({end-start} ms)", end=' ')
+                print(f"{self.model_type} prediction for frame {frame_i} ({end-start} s)", end=' ')
 
                 if not result.pose_landmarks:
                     frame_data = ['0'*3*len(self.KEYPOINT_DICT)]

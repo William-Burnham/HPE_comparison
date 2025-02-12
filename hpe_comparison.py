@@ -1,15 +1,10 @@
 import argparse
 import json
 
-from models.hpe_models.yolopose import Yolo_Model
-from models.hpe_models.movenet import MoveNet_Model
-from models.hpe_models.mediapipe import MediaPipe_Model
-print("1")
-from models.hpe_models.hrnet import HRNet_Model
-print("2")
-
 from utils.data_utils import load_file_paths, save_keypoints, reposition_keypoints
 from utils.plot_utils import overlay_keypoints_on_video
+
+import traceback
 
 def main(config):
     #results = {}
@@ -21,21 +16,26 @@ def main(config):
     # --------------------------------------------------- #
     # HRNet
     if config["hrnet"]:
-
         # Load hrnet model
-        model = HRNet_Model()
+        from models.hpe_models.mmpose_model import MMPose_Model
+        model = MMPose_Model(model_type="HRNet")
 
         # Predict on all files in input folder
         for file_path in file_paths:
             keypoints = model.predict(file_path=file_path, conf=config["confidence"])
-            print("SaveOut")
-            #results[str(model.get_model_type())] = keypoints
+            
+            # Keypoints x and y need to be swapped to be consistent with other models
+            keypoints = reposition_keypoints(
+                keypoints,
+                swap_xy = True
+            )
+
             save_output(model, keypoints, file_path, config)
-            print("donezo")
 
     # MediaPipe Pose
     if config["mediapipe_pose"]:
         # Load mediapipe model
+        from models.hpe_models.mediapipe import MediaPipe_Model
         model = MediaPipe_Model()
 
         # Predict on all files in input folder
@@ -47,6 +47,7 @@ def main(config):
     # MoveNet Lightning
     if config["movenet_lightning"]:
         # Load movenet model
+        from models.hpe_models.movenet import MoveNet_Model
         model = MoveNet_Model(model_type="movenet_lightning")
 
         # Predict on all files in input folder
@@ -58,6 +59,7 @@ def main(config):
     # MoveNet Thunder
     if config["movenet_thunder"]:
         # Load movenet model
+        from models.hpe_models.movenet import MoveNet_Model
         model = MoveNet_Model(model_type="movenet_thunder")
 
         # Predict on all files in input folder
@@ -69,6 +71,7 @@ def main(config):
     # YoloPose (Ultralytics)
     if config["yolopose"]:
         # Load yolopose model
+        from models.hpe_models.yolopose import Yolo_Model
         model = Yolo_Model()
 
         # Predict on all files in input folder
@@ -103,14 +106,21 @@ def save_output(model, keypoints, file_path, config):
     )
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='HPE_Comparative_Study')
 
-    parser.add_argument('--config_json', '-config', default='configuration.json', type=str)
+    try:
+        parser = argparse.ArgumentParser(description='HPE_Comparative_Study')
 
-    args = parser.parse_args()
+        parser.add_argument('--config_json', '-config', default='configuration.json', type=str)
 
-    config_file = args.config_json
-    with open(config_file) as json_file:
-        config = json.load(json_file)
+        args = parser.parse_args()
 
-    main(config)
+        config_file = args.config_json
+        with open(config_file) as json_file:
+            config = json.load(json_file)
+
+        main(config)
+
+    except Exception as e:
+        
+        print("Caught an exception:")
+        traceback.print_exc()

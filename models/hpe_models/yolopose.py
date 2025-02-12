@@ -36,7 +36,7 @@ class Yolo_Model(HPE_Model):
 
         self.CONNECTIONS = [[0,1],[0,2],[1,3],[2,4],[5,6],[5,7],[5,11],[6,8],[6,12],[7,9],[8,10],[11,12],[11,13],[12,14],[13,15],[14,16]]
 
-    def predict(self,  file_path, conf=0):
+    def predict(self,  file_path, conf=0.1):
         """
         Args:
             save_dir (str): Directory to store output files.
@@ -51,7 +51,7 @@ class Yolo_Model(HPE_Model):
 
         # Predict results
         if file_path == 0: raise Exception("file_path cannot be 0")
-        results = self.model.predict(source=file_path, save=False, show=False, conf=0.1) ################################### conf
+        results = self.model.predict(source=file_path, save=False, show=False, conf=self.conf)
 
         # Extract keypoint values from prediction results (only keypoints of box 0)
         keypoints = []
