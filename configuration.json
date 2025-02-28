@@ -2,16 +2,16 @@
     "input_folder": "data\\clip_2",
     "confidence": 0.1,
 
-    "do_save_keypoints": true,
+    "do_save_keypoints": false,
     "keypoints_output_folder": "output\\keypoints",
 
-    "do_save_overlay": true,
+    "do_save_overlay": false,
     "do_plot_confidence": true,
     "overlay_output_folder": "output\\overlay\\conf",
 
     "hrnet": false,
-    "mediapipe_pose": false,
-    "movenet_lightning": true,
-    "movenet_thunder": true,
+    "mediapipe_pose": true,
+    "movenet_lightning": false,
+    "movenet_thunder": false,
     "yolopose": false
 }

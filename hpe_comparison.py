@@ -1,16 +1,20 @@
 import argparse
 import json
+import matplotlib.pyplot as plt
+import numpy as np
 
 from utils.data_utils import load_file_paths, save_keypoints, reposition_keypoints
 from utils.plot_utils import overlay_keypoints_on_video
 
+from metrics.angles import calculate_angles, butterworth_derivative, gaussian_derivative, derivative
+
 import traceback
 
 def main(config):
-    #results = {}
-
-    # Loads the paths of all files within 'input_folder' into a list
+    # Load the paths of all files within 'input_folder' into a list
     file_paths = load_file_paths(config["input_folder"])
+
+    select = 7
 
     # Run selected models on all files within 'file_paths':
     # --------------------------------------------------- #
@@ -32,6 +36,10 @@ def main(config):
 
             save_output(model, keypoints, file_path, config)
 
+            angles = calculate_angles(keypoints, model)
+            angle_9 = angles.get(str(select))
+            plt.plot(range(len(angle_9)), angle_9, label = model.get_model_type())
+
     # MediaPipe Pose
     if config["mediapipe_pose"]:
         # Load mediapipe model
@@ -41,8 +49,11 @@ def main(config):
         # Predict on all files in input folder
         for file_path in file_paths:
             keypoints = model.predict(file_path=file_path, conf=config["confidence"])
-            #results[str(model.get_model_type())] = keypoints
             save_output(model, keypoints, file_path, config)
+        
+            angles = calculate_angles(keypoints, model)
+            angle_9 = angles.get(str(select))
+            plt.plot(range(len(angle_9)), angle_9, label = model.get_model_type())
 
     # MoveNet Lightning
     if config["movenet_lightning"]:
@@ -53,9 +64,12 @@ def main(config):
         # Predict on all files in input folder
         for file_path in file_paths:
             keypoints = model.predict(file_path=file_path, conf=config["confidence"])
-            #results[str(model.get_model_type())] = keypoints
             save_output(model, keypoints, file_path, config)
     
+            angles = calculate_angles(keypoints, model)
+            angle_9 = angles.get(str(select))
+            plt.plot(range(len(angle_9)), angle_9, label = model.get_model_type())
+
     # MoveNet Thunder
     if config["movenet_thunder"]:
         # Load movenet model
@@ -65,8 +79,11 @@ def main(config):
         # Predict on all files in input folder
         for file_path in file_paths:
             keypoints = model.predict(file_path=file_path, conf=config["confidence"])
-            #results[str(model.get_model_type())] = keypoints
             save_output(model, keypoints, file_path, config)
+
+            angles = calculate_angles(keypoints, model)
+            angle_9 = angles.get(str(select))
+            plt.plot(range(len(angle_9)), angle_9, label = model.get_model_type())
 
     # YoloPose (Ultralytics)
     if config["yolopose"]:
@@ -83,8 +100,32 @@ def main(config):
                 keypoints,
                 swap_xy = True
             )
-            #results[str(model.get_model_type())] = keypoints
             save_output(model, keypoints, file_path, config)
+
+            angles = calculate_angles(keypoints, model)
+            angle_9 = angles.get(str(select))
+            plt.plot(range(len(angle_9)), (np.array(angle_9)*10), label = model.get_model_type())
+
+    deriv = derivative(derivative(angle_9))
+    plt.plot(range(len(deriv)), deriv, label = "YOLO Derv")
+
+    ang_vel = derivative(butterworth_derivative(angle_9, 1))
+    plt.plot(range(len(ang_vel)), ang_vel, label = "YOLO Butter")
+
+    ang_vel = derivative(gaussian_derivative(angle_9, 1))
+    plt.plot(range(len(ang_vel)), ang_vel, label = "YOLO Gauss 1")
+
+    ang_vel = derivative(gaussian_derivative(angle_9, 2))
+    plt.plot(range(len(ang_vel)), ang_vel, label = "YOLO Gauss 2")
+
+    ang_vel = derivative(gaussian_derivative(angle_9, 3))
+    plt.plot(range(len(ang_vel)), ang_vel, label = "YOLO Gauss 3")
+
+    ang_vel = derivative(gaussian_derivative(angle_9, 4))
+    plt.plot(range(len(ang_vel)), ang_vel, label = "YOLO Gauss 4")
+
+    plt.legend()
+    plt.show()
 
 def save_output(model, keypoints, file_path, config):
     if config["do_save_keypoints"]: save_keypoints(

@@ -19,3 +19,6 @@ class HPE_Model():
     
     def get_confidence(self):
         return self.conf
+    
+    def get_kp_dict(self):
+        return self.KEYPOINT_DICT

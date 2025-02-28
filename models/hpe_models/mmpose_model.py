@@ -5,33 +5,31 @@ import numpy as np
 import requests
 import time
 
-import mmcv
-from mmcv import imread
-#import mmengine
-from mmengine.registry import init_default_scope
+import mmcv # type: ignore
+from mmcv import imread # type: ignore
+from mmengine.registry import init_default_scope # type: ignore
 
-from mmpose.apis import inference_topdown
-from mmpose.apis import init_model as init_pose_estimator
-from mmpose.evaluation.functional import nms
-from mmpose.registry import VISUALIZERS
-from mmpose.structures import merge_data_samples
+from mmpose.apis import inference_topdown # type: ignore
+from mmpose.apis import init_model as init_pose_estimator # type: ignore
+from mmpose.evaluation.functional import nms # type: ignore
+from mmpose.structures import merge_data_samples # type: ignore
 
 try:
-    import mmdet
+    import mmdet # type: ignore
     has_mmdet = True
 except (ImportError, ModuleNotFoundError):
     has_mmdet = False
-print(has_mmdet)
 
-from mmdet.apis.inference import inference_detector, init_detector
+from mmdet.apis.inference import inference_detector, init_detector # type: ignore
 
 from models.hpe_models.hpe_model import HPE_Model
 
 class MMPose_Model(HPE_Model):
-    def __init__(self, model_type="HRNet"):
+    def __init__(self, model_type="HRNet", detector="Faster-RCNN"):
         HPE_Model.__init__(self)
 
         self.model_type = model_type
+        self.detector = detector
 
         # Select paths for config and checkpoint
         if self.model_type.lower() == "hrnet":
@@ -39,22 +37,63 @@ class MMPose_Model(HPE_Model):
             self.POSE_CONFIG_PATH = "configs/body_2d_keypoint/topdown_heatmap/coco/hrnet_w32_coco_256x192.py"
             self.POSE_CHECKPOINT = "https://download.openmmlab.com/mmpose/top_down/hrnet/hrnet_w32_coco_256x192-c78dce93_20200708.pth"
 
-            self.DET_CONFIG_URL = "https://raw.githubusercontent.com/open-mmlab/mmpose/main/demo/mmdetection_cfg/faster_rcnn_r50_fpn_coco.py"
+        else:
+            raise Exception(f"(MMPose_Model): Unsupported model type {model_type}")
+        
+        # Select detector model
+        if self.detector.lower() == "rtmdet":
+
+            self.DET_CONFIG_URL = "https://raw.githubusercontent.com/open-mmlab/mmdetection/main/configs/rtmdet/rtmdet_l_8xb32-300e_coco.py"
+            self.DET_CONFIG_PATH = "configs/rtmdet/rtmdet_l_8xb32-300e_coco.py"
+            self.DET_CHECKPOINT = "https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_l_8xb32-300e_coco/rtmdet_l_8xb32-300e_coco_20220719_112030-5a0be7c4.pth"
+            
+            self.download_file(
+                "https://raw.githubusercontent.com/open-mmlab/mmdetection/main/configs/_base_/default_runtime.py",
+                "configs/_base_/default_runtime.py"
+            )
+            self.download_file(
+                "https://raw.githubusercontent.com/open-mmlab/mmdetection/main/configs/rtmdet/rtmdet_tta.py",
+                "configs/rtmdet/rtmdet_tta.py"
+            )
+            self.download_file(
+                "https://raw.githubusercontent.com/open-mmlab/mmdetection/main/configs/_base_/datasets/coco_detection.py",
+                "configs/_base_/datasets/coco_detection.py"
+            )
+            self.download_file(
+                "https://raw.githubusercontent.com/open-mmlab/mmdetection/main/configs/_base_/schedules/schedule_1x.py",
+                "configs/_base_/schedules/schedule_1x.py"
+            )
+
+        elif self.detector.lower() == "faster-rcnn":
+
+            self.DET_CONFIG_URL = "https://raw.githubusercontent.com/open-mmlab/mmdetection/main/configs/faster_rcnn/faster_rcnn_r50_fpn_coco.py"
             self.DET_CONFIG_PATH = "configs/faster_rcnn/faster_rcnn_r50_fpn_coco.py"
             self.DET_CHECKPOINT = "https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_1x_coco/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth"
             
+            self.download_file(
+                "https://raw.githubusercontent.com/open-mmlab/mmdetection/main/configs/_base_/default_runtime.py",
+                "configs/_base_/default_runtime.py"
+            )
+            self.download_file(
+                "https://raw.githubusercontent.com/open-mmlab/mmdetection/main/configs/_base_/models/faster-rcnn_r50_fpn.py",
+                "configs/_base_/models/faster-rcnn_r50_fpn.py"
+            )
+            self.download_file(
+                "https://raw.githubusercontent.com/open-mmlab/mmdetection/main/configs/_base_/datasets/coco_detection.py",
+                "configs/_base_/datasets/coco_detection.py"
+            )
+            self.download_file(
+                "https://raw.githubusercontent.com/open-mmlab/mmdetection/main/configs/_base_/schedules/schedule_1x.py",
+                "configs/_base_/schedules/schedule_1x.py"
+            )
+
         else:
-            raise Exception(f"(MMPose_Model): Unsupported model type {model_type}")
+            raise Exception(f"(MMPose_Model): Unsupported detector {detector}")
+
 
         # Ensure config files are downloaded
         self.download_file(self.POSE_CONFIG_URL, self.POSE_CONFIG_PATH)
         self.download_file(self.DET_CONFIG_URL, self.DET_CONFIG_PATH)
-        
-        # Ensure default runtime script is downloaded
-        self.download_file(
-            "https://raw.githubusercontent.com/open-mmlab/mmpose/main/configs/_base_/default_runtime.py",
-            "configs/_base_/default_runtime.py"
-        )
 
         # Load the selected model in two parts, detector and pose estimator
         self.detector, self.pose_estimator = self.load_model(self.POSE_CONFIG_PATH, self.POSE_CHECKPOINT, self.DET_CONFIG_PATH, self.DET_CHECKPOINT)
